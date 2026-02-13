@@ -33,6 +33,12 @@ jobs:
       - name: Run tests
         run: pnpm test:run
 
+      - name: Setup npm config
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish to npm
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/v}
@@ -47,5 +53,3 @@ jobs:
           else
             pnpm publish --access public --no-git-checks
           fi
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
