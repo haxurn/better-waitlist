@@ -1,0 +1,68 @@
+{
+  "name": "better-waitlist",
+  "version": "0.0.1",
+  "description": "Waitlist plugin for Better Auth - manage waitlists with email signup, position tracking, and admin approval",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint --fix src/",
+    "fmt": "oxfmt src/",
+    "fmt:check": "oxfmt --check src/",
+    "release": "bumpp release",
+    "changeset": "changeset"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haxurn/better-waitlist.git"
+  },
+  "homepage": "https://github.com/haxurn/better-waitlist#readme",
+  "author": {
+    "name": "Samson Tesfaye",
+    "url": "https://github.com/haxurn"
+  },
+  "bugs": {
+    "url": "https://github.com/haxurn/better-waitlist/issues"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/haxurn"
+  },
+  "peerDependencies": {
+    "better-auth": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@changesets/cli": "latest",
+    "better-auth": "^1.4.18",
+    "bumpp": "^10.4.1",
+    "oxfmt": "^0.32.0",
+    "oxlint": "^1.47.0",
+    "tsdown": "^0.12.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18",
+    "zod": "^4.3.6"
+  },
+  "keywords": [
+    "better-auth",
+    "waitlist",
+    "auth",
+    "authentication",
+    "plugin",
+    "invite",
+    "access-control"
+  ],
+  "license": "MIT"
+}
