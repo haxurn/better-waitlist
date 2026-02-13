@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/better-waitlist)](https://www.npmjs.com/package/better-waitlist)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/haxurn/better-waitlist)
-[![Better Auth](https://img.shields.io/badge/Better-Auth-Plugin-blue)](https://better-auth.com)
+[![Better Auth](https://img.shields.io/badge/Better_Auth-Plugin-blue)](https://better-auth.com)
 
 Waitlist plugin for [Better Auth](https://github.com/better-auth/better-auth)
 
