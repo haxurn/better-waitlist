@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && ls dist/*.d.ts | head -1 | xargs -I{} cp {} dist/index.d.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "oxlint src/",
