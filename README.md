@@ -1,4 +1,4 @@
-# better-waitlist
+# Better Waitlist
 
 [![npm version](https://img.shields.io/npm/v/better-waitlist)](https://www.npmjs.com/package/better-waitlist)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
