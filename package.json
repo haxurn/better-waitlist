@@ -1,6 +1,6 @@
 {
   "name": "better-waitlist",
-  "version": "0.0.1",
+  "version": "1.0.0-beta.1",
   "description": "Waitlist plugin for Better Auth - manage waitlists with email signup, position tracking, and admin approval",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,8 +22,10 @@
     "lint:fix": "oxlint --fix src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/",
-    "release": "bumpp release",
-    "changeset": "changeset"
+    "release": "pnpm build && bumpp && pnpm publish --access public --no-git-checks",
+    "release:beta": "pnpm build && bumpp --preid beta && pnpm publish --access public --tag beta --no-git-checks",
+    "release:canary": "pnpm build && bumpp --preid canary --no-commit --no-tag --no-push && pnpm publish --access public --tag canary --no-git-checks",
+    "bump": "bumpp"
   },
   "repository": {
     "type": "git",
@@ -45,9 +47,8 @@
     "better-auth": ">=1.0.0"
   },
   "devDependencies": {
-    "@changesets/cli": "latest",
     "better-auth": "^1.4.18",
-    "bumpp": "^10.4.1",
+    "bumpp": "^9.4.0",
     "oxfmt": "^0.32.0",
     "oxlint": "^1.47.0",
     "tsdown": "^0.12.0",
