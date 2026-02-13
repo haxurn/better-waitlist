@@ -13,6 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,10 +33,19 @@ jobs:
       - name: Run tests
         run: pnpm test:run
 
-      - name: Create Release Pull Request or Publish to npm
-        uses: changesets/action@v1
-        with:
-          publish: pnpm publish
+      - name: Publish to npm
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/v}
+          if [[ "$TAG_NAME" == *"beta"* ]] || [[ "$TAG_NAME" == *"alpha"* ]] || [[ "$TAG_NAME" == *"rc"* ]]; then
+            if [[ "$TAG_NAME" == *"beta"* ]]; then
+              pnpm publish --access public --tag beta --no-git-checks
+            elif [[ "$TAG_NAME" == *"alpha"* ]]; then
+              pnpm publish --access public --tag alpha --no-git-checks
+            elif [[ "$TAG_NAME" == *"rc"* ]]; then
+              pnpm publish --access public --tag rc --no-git-checks
+            fi
+          else
+            pnpm publish --access public --no-git-checks
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
