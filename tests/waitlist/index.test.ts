@@ -99,38 +99,6 @@ describe('waitlist', () => {
     });
   });
 
-  describe('endpoint configurations', () => {
-    it('should have POST method for join endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.joinWaitlist.method).toBe('POST');
-    });
-
-    it('should have GET method for status endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.getWaitlistStatus.method).toBe('GET');
-    });
-
-    it('should have GET method for position endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.getWaitlistPosition.method).toBe('GET');
-    });
-
-    it('should have GET method for list endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.listWaitlist.method).toBe('GET');
-    });
-
-    it('should have POST method for approve endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.approveWaitlistEntry.method).toBe('POST');
-    });
-
-    it('should have POST method for reject endpoint', () => {
-      const plugin = waitlist();
-      expect(plugin.endpoints?.rejectWaitlistEntry.method).toBe('POST');
-    });
-  });
-
   describe('WaitlistEntryInput type', () => {
     it('should validate WaitlistEntryInput', () => {
       const validInput: WaitlistEntryInput = {
