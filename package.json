@@ -1,6 +1,6 @@
 {
   "name": "better-waitlist",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.1-beta.1",
   "description": "Waitlist plugin for Better Auth - manage waitlists with email signup, position tracking, and admin approval",
   "type": "module",
   "main": "./dist/index.js",
