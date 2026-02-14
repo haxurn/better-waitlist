@@ -1,4 +1,4 @@
-import { APIError, createAuthEndpoint } from "better-auth/api";
+import { APIError, createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 import type { BetterAuthPlugin, BetterAuthPluginDBSchema } from "better-auth";
 import { z } from "zod";
 import type { WaitlistPluginOptions, WaitlistStatus, WaitlistEntry, WaitlistStats } from "./types";
@@ -246,6 +246,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/list",
         {
           method: "GET",
+          use: [sessionMiddleware],
           query: z.object({
             status: z.enum(["pending", "approved", "rejected"]).optional(),
             limit: z.number().int().min(1).max(100).default(20),
@@ -253,10 +254,18 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const adapter = ctx.context.adapter;
@@ -288,12 +297,21 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/stats",
         {
           method: "GET",
+          use: [sessionMiddleware],
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const adapter = ctx.context.adapter;
@@ -318,16 +336,25 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/approve",
         {
           method: "POST",
+          use: [sessionMiddleware],
           body: z.object({
             email: z.string().email(),
             sendInvite: z.boolean().optional(),
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const email = ctx.body.email.toLowerCase().trim();
@@ -402,15 +429,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/reject",
         {
           method: "POST",
+          use: [sessionMiddleware],
           body: z.object({
             email: z.string().email(),
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const email = ctx.body.email.toLowerCase().trim();
@@ -479,15 +515,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/promote",
         {
           method: "POST",
+          use: [sessionMiddleware],
           body: z.object({
             email: z.string().email(),
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const email = ctx.body.email.toLowerCase().trim();
@@ -536,15 +581,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/promote-all",
         {
           method: "POST",
+          use: [sessionMiddleware],
           body: z.object({
             status: z.enum(["pending", "approved"]).optional().default("approved"),
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const status = ctx.body.status;
@@ -584,15 +638,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/complete",
         {
           method: "POST",
+          use: [sessionMiddleware],
           body: z.object({
             email: z.string().email(),
           }),
         },
         async (ctx) => {
-          if (requireAdmin && !ctx.context.session) {
-            throw new APIError("UNAUTHORIZED", {
-              message: "Authentication required",
-            });
+          if (requireAdmin) {
+            if (!ctx.context.session) {
+              throw new APIError("UNAUTHORIZED", {
+                message: "You must be signed in",
+              });
+            }
+            const userRole = (ctx.context.session as any).user?.role;
+            if (userRole !== "admin") {
+              throw new APIError("FORBIDDEN", {
+                message: "You must have admin privileges",
+              });
+            }
           }
 
           const email = ctx.body.email.toLowerCase().trim();
