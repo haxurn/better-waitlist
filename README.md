@@ -6,6 +6,8 @@
 [![Better Auth](https://img.shields.io/badge/Better_Auth-Plugin-blue)](https://better-auth.com)
 [![GitHub Stars](https://img.shields.io/github/stars/haxurn/better-waitlist?style=social)](https://github.com/haxurn/better-waitlist/stargazers)
 
+[![Stars Over Time](https://starchart.cc/haxurn/better-waitlist.svg)](https://starchart.cc/haxurn/better-waitlist)
+
 Waitlist plugin for [Better Auth](https://github.com/better-auth/better-auth)
 
 **Made by [haxurn](https://github.com/haxurn)**
