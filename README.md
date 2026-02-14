@@ -88,7 +88,10 @@ export const auth = betterAuth({
       showPosition: false, // show position in status response (default: false)
 
       // Invitations
-      sendInviteOnApprove: false, // auto-send invite when approving (default: false)
+      markInvitedOnApprove: false, // mark as invited when approving (default: false)
+
+      // Position Management
+      recalculatePositionOnApprove: false, // recalculate positions when entries are approved/rejected (default: false)
 
       // Callbacks
       onJoin: async (entry) => {
@@ -103,9 +106,9 @@ export const auth = betterAuth({
         // Called when entry is rejected
         console.log('Rejected:', entry.email);
       },
-      onSignUp: async (entry) => {
-        // Called when entry is removed (user signed up)
-        console.log('Signed up:', entry.email);
+      onComplete: async (entry) => {
+        // Called when entry is completed (user signs up)
+        console.log('Completed:', entry.email);
       },
     }),
   ],
@@ -147,7 +150,7 @@ const { data, error } = await authClient.waitlist.getPosition({
 });
 
 if (data) {
-  console.log(data.position);
+  console.log(data.position); // real-time position among pending entries
 }
 ```
 
@@ -186,7 +189,7 @@ const { data, error } = await authClient.waitlist.approve({
   email: 'user@example.com',
 });
 
-// With auto-send invite
+// With mark as invited
 const { data: data2 } = await authClient.waitlist.approve({
   email: 'user@example.com',
   sendInvite: true, // override plugin setting for this call
@@ -217,7 +220,7 @@ Send invites to all approved users:
 
 ```ts
 const { data, error } = await authClient.waitlist.promoteAll({
-  status: 'approved', // or 'pending' - default: 'approved'
+  status: 'approved', // default: 'approved'
 });
 
 if (data) {
@@ -225,17 +228,17 @@ if (data) {
 }
 ```
 
-### Admin: Remove Entry
+### Admin: Complete Entry
 
-Remove an entry from the waitlist (e.g., after user signs up):
+Mark an entry as complete (e.g., after user signs up):
 
 ```ts
-const { data, error } = await authClient.waitlist.remove({
+const { data, error } = await authClient.waitlist.complete({
   email: 'user@example.com',
 });
 
 if (data) {
-  console.log(data.entry); // the removed entry data
+  console.log(data.entry); // the completed entry data
 }
 ```
 
@@ -266,7 +269,7 @@ The plugin adds a `waitlist` table with the following fields:
 | POST   | `/waitlist/reject`    | Session | Reject entry             |
 | POST   | `/waitlist/promote`   | Session | Send invite to user      |
 | POST   | `/waitlist/promote-all` | Session | Send invites to all      |
-| POST   | `/waitlist/remove`    | Session | Remove entry             |
+| POST   | `/waitlist/complete`  | Session | Complete entry           |
 
 ## TypeScript
 
