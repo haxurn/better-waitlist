@@ -52,9 +52,10 @@ export interface WaitlistPluginOptions {
   enabled?: boolean;
   allowStatusCheck?: boolean;
   showPosition?: boolean;
-  sendInviteOnApprove?: boolean;
+  markInvitedOnApprove?: boolean;
+  recalculatePositionOnApprove?: boolean;
   onJoin?: (entry: WaitlistEntry) => void | Promise<void>;
   onApprove?: (entry: WaitlistEntry) => void | Promise<void>;
   onReject?: (entry: WaitlistEntry) => void | Promise<void>;
-  onSignUp?: (entry: WaitlistEntry) => void | Promise<void>;
+  onComplete?: (entry: WaitlistEntry) => void | Promise<void>;
 }

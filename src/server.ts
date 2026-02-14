@@ -32,11 +32,12 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
     enabled = true,
     allowStatusCheck = true,
     showPosition = false,
-    sendInviteOnApprove = false,
+    markInvitedOnApprove = false,
+    recalculatePositionOnApprove = false,
     onJoin,
     onApprove,
     onReject,
-    onSignUp,
+    onComplete,
   } = options;
 
   const schema: BetterAuthPluginDBSchema = {
@@ -119,6 +120,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
 
           const count = await adapter.count({
             model: "waitlist",
+            where: [{ field: "status", value: "pending" }],
           });
 
           const entry = await adapter.create<WaitlistEntryRecord>({
@@ -178,8 +180,15 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             createdAt: entry.createdAt,
           };
 
-          if (showPosition) {
-            response.position = entry.position;
+          if (showPosition || entry.status === "pending") {
+            const pendingCount = await adapter.count({
+              model: "waitlist",
+              where: [
+                { field: "status", value: "pending" },
+                { field: "position", value: entry.position, operator: "lt" },
+              ],
+            });
+            response.position = pendingCount + 1;
           }
 
           return ctx.json(response);
@@ -209,9 +218,25 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
+          if (entry.status !== "pending") {
+            return ctx.json({
+              email: entry.email,
+              position: null,
+              status: entry.status as WaitlistStatus,
+            });
+          }
+
+          const pendingCount = await adapter.count({
+            model: "waitlist",
+            where: [
+              { field: "status", value: "pending" },
+              { field: "position", value: entry.position, operator: "lt" },
+            ],
+          });
+
           return ctx.json({
             email: entry.email,
-            position: entry.position,
+            position: pendingCount + 1,
             status: entry.status as WaitlistStatus,
           });
         },
@@ -309,7 +334,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }
 
           const email = ctx.body.email.toLowerCase().trim();
-          const sendInvite = ctx.body.sendInvite ?? sendInviteOnApprove;
+          const sendInvite = ctx.body.sendInvite ?? markInvitedOnApprove;
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
@@ -329,6 +354,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
+          const previousStatus = entry.status;
           const updateData: Partial<WaitlistEntryRecord> = { status: "approved" };
 
           if (sendInvite) {
@@ -345,6 +371,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             throw new APIError("INTERNAL_SERVER_ERROR", {
               message: "Failed to update waitlist entry",
             });
+          }
+
+          if (recalculatePositionOnApprove && previousStatus === "pending") {
+            const entriesToUpdate = await adapter.findMany<WaitlistEntryRecord>({
+              model: "waitlist",
+              where: [
+                { field: "status", value: "pending" },
+                { field: "position", value: entry.position, operator: "gt" },
+              ],
+            });
+
+            for (const e of entriesToUpdate) {
+              await adapter.update<WaitlistEntryRecord>({
+                model: "waitlist",
+                update: { position: e.position - 1 },
+                where: [{ field: "id", value: e.id }],
+              });
+            }
           }
 
           const response = toEntryResponse(updated);
@@ -393,6 +437,8 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
+          const previousStatus = entry.status;
+
           const updated = await adapter.update<WaitlistEntryRecord>({
             model: "waitlist",
             update: { status: "rejected" },
@@ -403,6 +449,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             throw new APIError("INTERNAL_SERVER_ERROR", {
               message: "Failed to update waitlist entry",
             });
+          }
+
+          if (recalculatePositionOnApprove && previousStatus === "pending") {
+            const entriesToUpdate = await adapter.findMany<WaitlistEntryRecord>({
+              model: "waitlist",
+              where: [
+                { field: "status", value: "pending" },
+                { field: "position", value: entry.position, operator: "gt" },
+              ],
+            });
+
+            for (const e of entriesToUpdate) {
+              await adapter.update<WaitlistEntryRecord>({
+                model: "waitlist",
+                update: { position: e.position - 1 },
+                where: [{ field: "id", value: e.id }],
+              });
+            }
           }
 
           const response = toEntryResponse(updated);
@@ -496,7 +560,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             model: "waitlist",
             where: [
               { field: "status", value: status },
-              ...(status === "approved" ? [{ field: "invitedAt", value: null }] : []),
+              { field: "invitedAt", value: null },
             ],
             sortBy: { field: "position", direction: "asc" },
           });
@@ -522,8 +586,8 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         },
       ),
 
-      removeWaitlistEntry: createAuthEndpoint(
-        "/waitlist/remove",
+      completeWaitlistEntry: createAuthEndpoint(
+        "/waitlist/complete",
         {
           method: "POST",
           body: z.object({
@@ -554,8 +618,8 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
 
           const response = toEntryResponse(entry);
 
-          if (onSignUp) {
-            await onSignUp(response);
+          if (onComplete) {
+            await onComplete(response);
           }
 
           await adapter.delete({
