@@ -40,7 +40,7 @@ async function joinWaitlist() {
  * Used by: Anyone wanting to check their status
  */
 async function checkStatus() {
-  const { data, error } = await authClient.waitlist.status({
+  const { data, error } = await (authClient.waitlist as any).status({
     email: "user@example.com",
   });
 
@@ -56,7 +56,7 @@ async function checkStatus() {
  * Used by: Anyone wanting to know their position
  */
 async function checkPosition() {
-  const { data, error } = await authClient.waitlist.position({
+  const { data, error } = await (authClient.waitlist as any).position({
     email: "user@example.com",
   });
 
@@ -75,7 +75,7 @@ async function checkPosition() {
  * Used by: Admin only
  */
 async function listEntries() {
-  const { data, error } = await authClient.waitlist.list({
+  const { data, error } = await (authClient.waitlist as any).list({
     status: "pending", // Optional: filter by status
     limit: 20,
     offset: 0,
@@ -83,7 +83,7 @@ async function listEntries() {
 
   if (data) {
     console.log("Total entries:", data.total);
-    data.entries.forEach((entry) => {
+    data.entries.forEach((entry: any) => {
       console.log(
         `${entry.position}. ${entry.email} - ${entry.status}`
       );
@@ -167,7 +167,7 @@ async function promoteAll() {
 
   if (data) {
     console.log("Promoted count:", data.promoted);
-    data.entries.forEach((entry) => {
+    data.entries.forEach((entry: any) => {
       console.log(`Invited: ${entry.email}`);
     });
   }
