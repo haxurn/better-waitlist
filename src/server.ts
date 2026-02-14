@@ -1,4 +1,4 @@
-import { APIError, createAuthEndpoint, sessionMiddleware } from "better-auth/api";
+import { APIError, createAuthEndpoint } from "better-auth/api";
 import type { BetterAuthPlugin, BetterAuthPluginDBSchema } from "better-auth";
 import { z } from "zod";
 import type { WaitlistPluginOptions, WaitlistStatus, WaitlistEntry, WaitlistStats } from "./types";
@@ -251,7 +251,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             limit: z.number().int().min(1).max(100).default(20),
             offset: z.number().int().min(0).default(0),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -289,7 +288,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         "/waitlist/stats",
         {
           method: "GET",
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -324,7 +322,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             email: z.string().email(),
             sendInvite: z.boolean().optional(),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -408,7 +405,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           body: z.object({
             email: z.string().email(),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -486,7 +482,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           body: z.object({
             email: z.string().email(),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -544,7 +539,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           body: z.object({
             status: z.enum(["pending", "approved"]).optional().default("approved"),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
@@ -593,7 +587,6 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           body: z.object({
             email: z.string().email(),
           }),
-          use: requireAdmin ? [sessionMiddleware] : [],
         },
         async (ctx) => {
           if (requireAdmin && !ctx.context.session) {
