@@ -5,13 +5,21 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -39,17 +47,35 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to npm
+      - name: Detect version tag type
+        id: version
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/v}
-          if [[ "$TAG_NAME" == *"beta"* ]] || [[ "$TAG_NAME" == *"alpha"* ]] || [[ "$TAG_NAME" == *"rc"* ]]; then
-            if [[ "$TAG_NAME" == *"beta"* ]]; then
-              pnpm publish --access public --tag beta --no-git-checks
-            elif [[ "$TAG_NAME" == *"alpha"* ]]; then
-              pnpm publish --access public --tag alpha --no-git-checks
-            elif [[ "$TAG_NAME" == *"rc"* ]]; then
-              pnpm publish --access public --tag rc --no-git-checks
-            fi
+          echo "version=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          if [[ "$TAG_NAME" == *"beta"* ]]; then
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_NAME" == *"alpha"* ]]; then
+            echo "tag=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_NAME" == *"rc"* ]]; then
+            echo "tag=rc" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if [[ "$TAG" != "latest" ]]; then
+            pnpm publish --access public --tag $TAG --no-git-checks
           else
             pnpm publish --access public --no-git-checks
           fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          name: Release v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
