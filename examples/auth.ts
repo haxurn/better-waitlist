@@ -20,15 +20,12 @@ export const authWithOptions = betterAuth({
         console.log("New entry:", entry.email);
         console.log("Position:", entry.position);
       },
-
       onApprove: async (entry) => { 
         console.log("Approved:", entry.email);
       },
-
       onReject: async (entry) => {
         console.log("Rejected:", entry.email);
       },
-
       onComplete: async (entry) => {
         console.log("Completed:", entry.email);
       },
