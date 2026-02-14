@@ -9,4 +9,5 @@ export type {
   WaitlistListOptions,
   WaitlistListResponse,
   WaitlistPluginOptions,
+  WaitlistStats,
 } from "./types";

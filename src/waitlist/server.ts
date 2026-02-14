@@ -1,7 +1,7 @@
 import { APIError, createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 import type { BetterAuthPlugin, BetterAuthPluginDBSchema } from "better-auth";
 import { z } from "zod";
-import type { WaitlistPluginOptions, WaitlistStatus } from "./types";
+import type { WaitlistPluginOptions, WaitlistStatus, WaitlistEntry, WaitlistStats } from "./types";
 
 interface WaitlistEntryRecord {
   id: string;
@@ -9,22 +9,35 @@ interface WaitlistEntryRecord {
   status: string;
   position: number;
   userId: string | null;
+  invitedAt: Date | null;
   createdAt: Date;
 }
 
-function toEntryResponse(entry: WaitlistEntryRecord) {
+function toEntryResponse(entry: WaitlistEntryRecord): WaitlistEntry {
   return {
     id: entry.id,
     email: entry.email,
     status: entry.status as WaitlistStatus,
     position: entry.position,
     userId: entry.userId,
+    invitedAt: entry.invitedAt,
     createdAt: entry.createdAt,
   };
 }
 
 export const waitlist = (options: WaitlistPluginOptions = {}) => {
-  const requireAdmin = options.requireAdmin ?? true;
+  const {
+    requireAdmin = true,
+    maxEntries = 0,
+    enabled = true,
+    allowStatusCheck = true,
+    showPosition = false,
+    sendInviteOnApprove = false,
+    onJoin,
+    onApprove,
+    onReject,
+    onSignUp,
+  } = options;
 
   const schema: BetterAuthPluginDBSchema = {
     waitlist: {
@@ -46,10 +59,10 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         userId: {
           type: "string",
           required: false,
-          references: {
-            model: "user",
-            field: "id",
-          },
+        },
+        invitedAt: {
+          type: "date",
+          required: false,
         },
         createdAt: {
           type: "date",
@@ -74,9 +87,24 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }),
         },
         async (ctx) => {
+          if (!enabled) {
+            throw new APIError("FORBIDDEN", {
+              message: "Waitlist is closed",
+            });
+          }
+
           const adapter = ctx.context.adapter;
           const email = ctx.body.email.toLowerCase().trim();
           const userId = ctx.body.userId;
+
+          if (maxEntries > 0) {
+            const count = await adapter.count({ model: "waitlist" });
+            if (count >= maxEntries) {
+              throw new APIError("FORBIDDEN", {
+                message: "Waitlist is full",
+              });
+            }
+          }
 
           const existing = await adapter.findOne<WaitlistEntryRecord>({
             model: "waitlist",
@@ -100,11 +128,18 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
               status: "pending",
               position: count + 1,
               userId: userId ?? null,
+              invitedAt: null,
               createdAt: new Date(),
             },
           });
 
-          return ctx.json(toEntryResponse(entry));
+          const response = toEntryResponse(entry);
+
+          if (onJoin) {
+            await onJoin(response);
+          }
+
+          return ctx.json(response);
         },
       ),
 
@@ -117,6 +152,12 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }),
         },
         async (ctx) => {
+          if (!allowStatusCheck) {
+            throw new APIError("FORBIDDEN", {
+              message: "Status check is disabled",
+            });
+          }
+
           const email = ctx.query.email.toLowerCase().trim();
           const adapter = ctx.context.adapter;
 
@@ -131,11 +172,17 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
-          return ctx.json({
+          const response: Record<string, unknown> = {
             email: entry.email,
             status: entry.status as WaitlistStatus,
             createdAt: entry.createdAt,
-          });
+          };
+
+          if (showPosition) {
+            response.position = entry.position;
+          }
+
+          return ctx.json(response);
         },
       ),
 
@@ -213,12 +260,44 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
         },
       ),
 
+      waitlistStats: createAuthEndpoint(
+        "/waitlist/stats",
+        {
+          method: "GET",
+          use: requireAdmin ? [sessionMiddleware] : [],
+        },
+        async (ctx) => {
+          if (requireAdmin && !ctx.context.session) {
+            throw new APIError("UNAUTHORIZED", {
+              message: "Authentication required",
+            });
+          }
+
+          const adapter = ctx.context.adapter;
+
+          const [pending, approved, rejected, total] = await Promise.all([
+            adapter.count({ model: "waitlist", where: [{ field: "status", value: "pending" }] }),
+            adapter.count({ model: "waitlist", where: [{ field: "status", value: "approved" }] }),
+            adapter.count({ model: "waitlist", where: [{ field: "status", value: "rejected" }] }),
+            adapter.count({ model: "waitlist" }),
+          ]);
+
+          return ctx.json({
+            total,
+            pending,
+            approved,
+            rejected,
+          } as WaitlistStats);
+        },
+      ),
+
       approveWaitlistEntry: createAuthEndpoint(
         "/waitlist/approve",
         {
           method: "POST",
           body: z.object({
             email: z.string().email(),
+            sendInvite: z.boolean().optional(),
           }),
           use: requireAdmin ? [sessionMiddleware] : [],
         },
@@ -230,6 +309,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }
 
           const email = ctx.body.email.toLowerCase().trim();
+          const sendInvite = ctx.body.sendInvite ?? sendInviteOnApprove;
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
@@ -249,9 +329,15 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
+          const updateData: Partial<WaitlistEntryRecord> = { status: "approved" };
+
+          if (sendInvite) {
+            updateData.invitedAt = new Date();
+          }
+
           const updated = await adapter.update<WaitlistEntryRecord>({
             model: "waitlist",
-            update: { status: "approved" },
+            update: updateData,
             where: [{ field: "id", value: entry.id }],
           });
 
@@ -261,7 +347,13 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
-          return ctx.json(toEntryResponse(updated));
+          const response = toEntryResponse(updated);
+
+          if (onApprove) {
+            await onApprove(response);
+          }
+
+          return ctx.json(response);
         },
       ),
 
@@ -313,7 +405,165 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
             });
           }
 
+          const response = toEntryResponse(updated);
+
+          if (onReject) {
+            await onReject(response);
+          }
+
+          return ctx.json(response);
+        },
+      ),
+
+      promoteWaitlistEntry: createAuthEndpoint(
+        "/waitlist/promote",
+        {
+          method: "POST",
+          body: z.object({
+            email: z.string().email(),
+          }),
+          use: requireAdmin ? [sessionMiddleware] : [],
+        },
+        async (ctx) => {
+          if (requireAdmin && !ctx.context.session) {
+            throw new APIError("UNAUTHORIZED", {
+              message: "Authentication required",
+            });
+          }
+
+          const email = ctx.body.email.toLowerCase().trim();
+          const adapter = ctx.context.adapter;
+
+          const entry = await adapter.findOne<WaitlistEntryRecord>({
+            model: "waitlist",
+            where: [{ field: "email", value: email }],
+          });
+
+          if (!entry) {
+            throw new APIError("NOT_FOUND", {
+              message: "Email not found in waitlist",
+            });
+          }
+
+          if (entry.status !== "approved") {
+            throw new APIError("BAD_REQUEST", {
+              message: "Entry must be approved before promoting",
+            });
+          }
+
+          if (entry.invitedAt) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Invite already sent",
+            });
+          }
+
+          const updated = await adapter.update<WaitlistEntryRecord>({
+            model: "waitlist",
+            update: { invitedAt: new Date() },
+            where: [{ field: "id", value: entry.id }],
+          });
+
+          if (!updated) {
+            throw new APIError("INTERNAL_SERVER_ERROR", {
+              message: "Failed to promote waitlist entry",
+            });
+          }
+
           return ctx.json(toEntryResponse(updated));
+        },
+      ),
+
+      promoteAllWaitlist: createAuthEndpoint(
+        "/waitlist/promote-all",
+        {
+          method: "POST",
+          body: z.object({
+            status: z.enum(["pending", "approved"]).optional().default("approved"),
+          }),
+          use: requireAdmin ? [sessionMiddleware] : [],
+        },
+        async (ctx) => {
+          if (requireAdmin && !ctx.context.session) {
+            throw new APIError("UNAUTHORIZED", {
+              message: "Authentication required",
+            });
+          }
+
+          const status = ctx.body.status;
+          const adapter = ctx.context.adapter;
+
+          const entries = await adapter.findMany<WaitlistEntryRecord>({
+            model: "waitlist",
+            where: [
+              { field: "status", value: status },
+              ...(status === "approved" ? [{ field: "invitedAt", value: null }] : []),
+            ],
+            sortBy: { field: "position", direction: "asc" },
+          });
+
+          const updatedEntries: WaitlistEntry[] = [];
+
+          for (const entry of entries) {
+            const updated = await adapter.update<WaitlistEntryRecord>({
+              model: "waitlist",
+              update: { invitedAt: new Date() },
+              where: [{ field: "id", value: entry.id }],
+            });
+
+            if (updated) {
+              updatedEntries.push(toEntryResponse(updated));
+            }
+          }
+
+          return ctx.json({
+            promoted: updatedEntries.length,
+            entries: updatedEntries,
+          });
+        },
+      ),
+
+      removeWaitlistEntry: createAuthEndpoint(
+        "/waitlist/remove",
+        {
+          method: "POST",
+          body: z.object({
+            email: z.string().email(),
+          }),
+          use: requireAdmin ? [sessionMiddleware] : [],
+        },
+        async (ctx) => {
+          if (requireAdmin && !ctx.context.session) {
+            throw new APIError("UNAUTHORIZED", {
+              message: "Authentication required",
+            });
+          }
+
+          const email = ctx.body.email.toLowerCase().trim();
+          const adapter = ctx.context.adapter;
+
+          const entry = await adapter.findOne<WaitlistEntryRecord>({
+            model: "waitlist",
+            where: [{ field: "email", value: email }],
+          });
+
+          if (!entry) {
+            throw new APIError("NOT_FOUND", {
+              message: "Email not found in waitlist",
+            });
+          }
+
+          const response = toEntryResponse(entry);
+
+          if (onSignUp) {
+            await onSignUp(response);
+          }
+
+          await adapter.delete({
+            model: "waitlist",
+            where: [{ field: "id", value: entry.id }],
+          });
+
+          return ctx.json({ success: true, entry: response });
         },
       ),
     },

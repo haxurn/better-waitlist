@@ -6,6 +6,7 @@ export interface WaitlistEntry {
   status: WaitlistStatus;
   position: number;
   userId: string | null;
+  invitedAt: Date | null;
   createdAt: Date;
 }
 
@@ -23,6 +24,7 @@ export interface WaitlistPositionResponse {
 export interface WaitlistStatusResponse {
   email: string;
   status: WaitlistStatus;
+  position?: number;
   createdAt: Date;
 }
 
@@ -37,10 +39,22 @@ export interface WaitlistListResponse {
   total: number;
 }
 
+export interface WaitlistStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
 export interface WaitlistPluginOptions {
-  /**
-   * Whether admin endpoints (list, approve, reject) require authentication.
-   * @default true
-   */
   requireAdmin?: boolean;
+  maxEntries?: number;
+  enabled?: boolean;
+  allowStatusCheck?: boolean;
+  showPosition?: boolean;
+  sendInviteOnApprove?: boolean;
+  onJoin?: (entry: WaitlistEntry) => void | Promise<void>;
+  onApprove?: (entry: WaitlistEntry) => void | Promise<void>;
+  onReject?: (entry: WaitlistEntry) => void | Promise<void>;
+  onSignUp?: (entry: WaitlistEntry) => void | Promise<void>;
 }
