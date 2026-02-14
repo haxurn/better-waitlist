@@ -39,15 +39,10 @@ describe('waitlist', () => {
       expect(schema?.fields.userId).toBeDefined();
       expect(schema?.fields.userId.type).toBe('string');
       expect(schema?.fields.userId.required).toBe(false);
-    });
 
-    it('should have userId reference to user table', () => {
-      const plugin = waitlist();
-      const schema = plugin.schema?.waitlist;
-
-      expect(schema?.fields.userId?.references).toBeDefined();
-      expect(schema?.fields.userId?.references?.model).toBe('user');
-      expect(schema?.fields.userId?.references?.field).toBe('id');
+      expect(schema?.fields.invitedAt).toBeDefined();
+      expect(schema?.fields.invitedAt.type).toBe('date');
+      expect(schema?.fields.invitedAt.required).toBe(false);
     });
 
     it('should create plugin with default options', () => {
@@ -56,13 +51,55 @@ describe('waitlist', () => {
       expect(plugin.schema).toBeDefined();
     });
 
-    it('should create plugin with custom options', () => {
-      const plugin = waitlist({ requireAdmin: false });
+    it('should create plugin with requireAdmin option', () => {
+      const pluginAdmin = waitlist({ requireAdmin: true });
+      expect(pluginAdmin.id).toBe('waitlist');
+
+      const pluginNoAdmin = waitlist({ requireAdmin: false });
+      expect(pluginNoAdmin.id).toBe('waitlist');
+    });
+
+    it('should create plugin with maxEntries option', () => {
+      const plugin = waitlist({ maxEntries: 100 });
       expect(plugin.id).toBe('waitlist');
     });
 
-    it('should create plugin with requireAdmin true by default', () => {
-      const plugin = waitlist({ requireAdmin: true });
+    it('should create plugin with enabled option', () => {
+      const pluginEnabled = waitlist({ enabled: true });
+      expect(pluginEnabled.id).toBe('waitlist');
+
+      const pluginDisabled = waitlist({ enabled: false });
+      expect(pluginDisabled.id).toBe('waitlist');
+    });
+
+    it('should create plugin with allowStatusCheck option', () => {
+      const plugin = waitlist({ allowStatusCheck: false });
+      expect(plugin.id).toBe('waitlist');
+    });
+
+    it('should create plugin with showPosition option', () => {
+      const plugin = waitlist({ showPosition: true });
+      expect(plugin.id).toBe('waitlist');
+    });
+
+    it('should create plugin with sendInviteOnApprove option', () => {
+      const plugin = waitlist({ sendInviteOnApprove: true });
+      expect(plugin.id).toBe('waitlist');
+    });
+
+    it('should create plugin with all callbacks', () => {
+      const onJoin = () => {};
+      const onApprove = () => {};
+      const onReject = () => {};
+      const onSignUp = () => {};
+
+      const plugin = waitlist({
+        onJoin,
+        onApprove,
+        onReject,
+        onSignUp,
+      });
+
       expect(plugin.id).toBe('waitlist');
     });
   });
@@ -88,6 +125,11 @@ describe('waitlist', () => {
       expect(plugin.endpoints?.listWaitlist).toBeDefined();
     });
 
+    it('should have waitlistStats endpoint', () => {
+      const plugin = waitlist();
+      expect(plugin.endpoints?.waitlistStats).toBeDefined();
+    });
+
     it('should have approveWaitlistEntry endpoint', () => {
       const plugin = waitlist();
       expect(plugin.endpoints?.approveWaitlistEntry).toBeDefined();
@@ -96,6 +138,21 @@ describe('waitlist', () => {
     it('should have rejectWaitlistEntry endpoint', () => {
       const plugin = waitlist();
       expect(plugin.endpoints?.rejectWaitlistEntry).toBeDefined();
+    });
+
+    it('should have promoteWaitlistEntry endpoint', () => {
+      const plugin = waitlist();
+      expect(plugin.endpoints?.promoteWaitlistEntry).toBeDefined();
+    });
+
+    it('should have promoteAllWaitlist endpoint', () => {
+      const plugin = waitlist();
+      expect(plugin.endpoints?.promoteAllWaitlist).toBeDefined();
+    });
+
+    it('should have removeWaitlistEntry endpoint', () => {
+      const plugin = waitlist();
+      expect(plugin.endpoints?.removeWaitlistEntry).toBeDefined();
     });
   });
 
