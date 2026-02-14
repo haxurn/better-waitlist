@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type WaitlistEntryInput, waitlist } from '../../src/waitlist/index';
+import { type WaitlistEntryInput, waitlist } from '../src/index';
 
 describe('waitlist', () => {
   describe('plugin creation', () => {

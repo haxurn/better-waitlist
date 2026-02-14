@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: "./src/waitlist/index.ts",
+  entry: "./src/index.ts",
   outDir: "./dist",
   dts: "index.d.ts",
   format: ["esm"],
