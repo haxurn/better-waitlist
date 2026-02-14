@@ -27,7 +27,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
   const requireAdmin = options.requireAdmin ?? true;
 
   const schema: BetterAuthPluginDBSchema = {
-    waitlistEntry: {
+    waitlist: {
       fields: {
         email: {
           type: "string",
@@ -79,7 +79,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           const userId = ctx.body.userId;
 
           const existing = await adapter.findOne<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             where: [{ field: "email", value: email }],
           });
 
@@ -90,11 +90,11 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }
 
           const count = await adapter.count({
-            model: "waitlistEntry",
+            model: "waitlist",
           });
 
           const entry = await adapter.create<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             data: {
               email,
               status: "pending",
@@ -121,7 +121,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             where: [{ field: "email", value: email }],
           });
 
@@ -152,7 +152,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             where: [{ field: "email", value: email }],
           });
 
@@ -194,14 +194,14 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
 
           const [entries, total] = await Promise.all([
             adapter.findMany<WaitlistEntryRecord>({
-              model: "waitlistEntry",
+              model: "waitlist",
               where,
               sortBy: { field: "position", direction: "asc" },
               limit,
               offset,
             }),
             adapter.count({
-              model: "waitlistEntry",
+              model: "waitlist",
               where,
             }),
           ]);
@@ -233,7 +233,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             where: [{ field: "email", value: email }],
           });
 
@@ -250,7 +250,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }
 
           const updated = await adapter.update<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             update: { status: "approved" },
             where: [{ field: "id", value: entry.id }],
           });
@@ -285,7 +285,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           const adapter = ctx.context.adapter;
 
           const entry = await adapter.findOne<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             where: [{ field: "email", value: email }],
           });
 
@@ -302,7 +302,7 @@ export const waitlist = (options: WaitlistPluginOptions = {}) => {
           }
 
           const updated = await adapter.update<WaitlistEntryRecord>({
-            model: "waitlistEntry",
+            model: "waitlist",
             update: { status: "rejected" },
             where: [{ field: "id", value: entry.id }],
           });

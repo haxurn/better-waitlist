@@ -11,12 +11,12 @@ describe('waitlist', () => {
     it('should create a plugin with schema', () => {
       const plugin = waitlist();
       expect(plugin.schema).toBeDefined();
-      expect(plugin.schema?.waitlistEntry).toBeDefined();
+      expect(plugin.schema?.waitlist).toBeDefined();
     });
 
     it('should have correct schema fields', () => {
       const plugin = waitlist();
-      const schema = plugin.schema?.waitlistEntry;
+      const schema = plugin.schema?.waitlist;
 
       expect(schema?.fields.email).toBeDefined();
       expect(schema?.fields.email.type).toBe('string');
@@ -43,7 +43,7 @@ describe('waitlist', () => {
 
     it('should have userId reference to user table', () => {
       const plugin = waitlist();
-      const schema = plugin.schema?.waitlistEntry;
+      const schema = plugin.schema?.waitlist;
 
       expect(schema?.fields.userId?.references).toBeDefined();
       expect(schema?.fields.userId?.references?.model).toBe('user');
