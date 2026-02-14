@@ -82,8 +82,13 @@ describe('waitlist', () => {
       expect(plugin.id).toBe('waitlist');
     });
 
-    it('should create plugin with sendInviteOnApprove option', () => {
-      const plugin = waitlist({ sendInviteOnApprove: true });
+    it('should create plugin with markInvitedOnApprove option', () => {
+      const plugin = waitlist({ markInvitedOnApprove: true });
+      expect(plugin.id).toBe('waitlist');
+    });
+
+    it('should create plugin with recalculatePositionOnApprove option', () => {
+      const plugin = waitlist({ recalculatePositionOnApprove: true });
       expect(plugin.id).toBe('waitlist');
     });
 
@@ -91,13 +96,13 @@ describe('waitlist', () => {
       const onJoin = () => {};
       const onApprove = () => {};
       const onReject = () => {};
-      const onSignUp = () => {};
+      const onComplete = () => {};
 
       const plugin = waitlist({
         onJoin,
         onApprove,
         onReject,
-        onSignUp,
+        onComplete,
       });
 
       expect(plugin.id).toBe('waitlist');
@@ -150,9 +155,9 @@ describe('waitlist', () => {
       expect(plugin.endpoints?.promoteAllWaitlist).toBeDefined();
     });
 
-    it('should have removeWaitlistEntry endpoint', () => {
+    it('should have completeWaitlistEntry endpoint', () => {
       const plugin = waitlist();
-      expect(plugin.endpoints?.removeWaitlistEntry).toBeDefined();
+      expect(plugin.endpoints?.completeWaitlistEntry).toBeDefined();
     });
   });
 
